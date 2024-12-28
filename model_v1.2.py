@@ -9,6 +9,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score, mean_absolute_percentage_error
 import matplotlib.pyplot as plt  # Import nécessaire pour les plots
 
+
 def main():
     # ---------------------------------------------------------
     # 0) CONFIGURATION DE TENSORFLOW POUR UTILISER LE GPU OPTIMISÉMENT
@@ -18,7 +19,8 @@ def main():
         try:
             for gpu in gpus:
                 tf.config.experimental.set_memory_growth(gpu, True)
-            print(f"{len(gpus)} GPU(s) détecté(s) et configuré(s) pour une utilisation optimisée de la mémoire.")
+            print(
+                f"{len(gpus)} GPU(s) détecté(s) et configuré(s) pour une utilisation optimisée de la mémoire.")
         except RuntimeError as e:
             print(e)
     else:
@@ -35,7 +37,7 @@ def main():
     y = y[:, 4]  # Ajustez l'index si nécessaire
     y = y.reshape(-1, 1)  # Forme : (40470, 1)
 
-    print("Forme de X :", X.shape)  
+    print("Forme de X :", X.shape)
     print("Forme de y :", y.shape)
 
     # -----------------------------
@@ -57,8 +59,10 @@ def main():
     # ---------------------------------------------------
     model = Sequential()
     # Couche LSTM bidirectionnelle avec return_sequences=True pour empiler une autre couche LSTM
-    model.add(Bidirectional(LSTM(64, activation='relu', return_sequences=True), input_shape=(X_train.shape[1], X_train.shape[2])))
-    model.add(BatchNormalization())  # Normalisation par lots pour stabiliser l'apprentissage
+    model.add(Bidirectional(LSTM(64, activation='relu', return_sequences=True),
+              input_shape=(X_train.shape[1], X_train.shape[2])))
+    # Normalisation par lots pour stabiliser l'apprentissage
+    model.add(BatchNormalization())
     model.add(LSTM(32, activation='relu'))
     model.add(BatchNormalization())
     model.add(Dropout(0.2))  # Régularisation pour éviter le surapprentissage
@@ -78,7 +82,7 @@ def main():
     # Callbacks pour arrêter tôt l'entraînement et réduire le taux d'apprentissage si nécessaire
     early_stopping = keras.callbacks.EarlyStopping(
         monitor='val_loss',
-        patience=10, 
+        patience=10,
         restore_best_weights=True
     )
 
@@ -90,9 +94,9 @@ def main():
     )
 
     history = model.fit(
-        X_train, 
-        y_train, 
-        epochs=epochs, 
+        X_train,
+        y_train,
+        epochs=epochs,
         batch_size=batch_size,
         validation_data=(X_test, y_test),
         callbacks=[early_stopping, reduce_lr],
@@ -135,6 +139,7 @@ def main():
     # Sauvegarde du modèle
     model.save('eth_usdt_lstm_model.h5')
     print("\nModèle sauvegardé sous 'eth_usdt_lstm_model.h5'")
+
 
 if __name__ == "__main__":
     main()
