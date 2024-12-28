@@ -12,7 +12,8 @@ print(df.head())
 # Gestion des valeurs manquantes
 # Exclure la colonne timestamp avant de remplir les NaN
 if 'timestamp' in df.columns:
-    df['timestamp'] = pd.to_datetime(df['timestamp'])  # Convertir en format datetime
+    # Convertir en format datetime
+    df['timestamp'] = pd.to_datetime(df['timestamp'])
     timestamps = df['timestamp']  # Sauvegarder les timestamps
     df = df.drop(columns=['timestamp'])  # Supprimer la colonne temporairement
 
@@ -28,6 +29,8 @@ df_normalized = pd.DataFrame(scaled_data, columns=df.columns)
 df_normalized['timestamp'] = timestamps.values
 
 # Création des séquences pour LSTM
+
+
 def create_sequences(data, sequence_length):
     X, y = [], []
     for i in range(len(data) - sequence_length):
@@ -35,11 +38,13 @@ def create_sequences(data, sequence_length):
         y.append(data[i+sequence_length])   # Sortie (prochaine bougie)
     return np.array(X), np.array(y)
 
+
 # Définir la longueur des séquences
-sequence_length = 10
+sequence_length = 20
 
 # Conversion en tableau numpy
-data_array = df_normalized.drop(columns=['timestamp']).values  # Exclure les timestamps pour créer des séquences
+# Exclure les timestamps pour créer des séquences
+data_array = df_normalized.drop(columns=['timestamp']).values
 X, y = create_sequences(data_array, sequence_length)
 
 # Vérification des dimensions

@@ -47,25 +47,29 @@ print("Total data for prediction: ", closedf.shape[0])
 
 # Normalizing Data
 del closedf['Date']
-scaler = MinMaxScaler(feature_range=(0,1))
-closedf = scaler.fit_transform(np.array(closedf).reshape(-1,1))
+scaler = MinMaxScaler(feature_range=(0, 1))
+closedf = scaler.fit_transform(np.array(closedf).reshape(-1, 1))
 print(closedf.shape)
 
 # we keep the training set as 60% and 40% testing set
 training_size = int(len(closedf) * 0.60)
 test_size = len(closedf) - training_size
-train_data, test_data = closedf[0:training_size,:], closedf[training_size:len(closedf),:1]
+train_data, test_data = closedf[0:training_size,
+                                :], closedf[training_size:len(closedf), :1]
 print("train_data: ", train_data.shape)
 print("test_data: ", test_data.shape)
 
 # Function to create dataset with time step
+
+
 def create_dataset(dataset, time_step=1):
     dataX, dataY = [], []
     for i in range(len(dataset)-time_step-1):
-        a = dataset[i:(i+time_step), 0]   
+        a = dataset[i:(i+time_step), 0]
         dataX.append(a)
         dataY.append(dataset[i + time_step, 0])
     return np.array(dataX), np.array(dataY)
+
 
 time_step = 15
 X_train, y_train = create_dataset(train_data, time_step)
@@ -80,7 +84,7 @@ print("X_test: ", X_test.shape)
 
 # Building the LSTM model
 model = Sequential()
-model.add(LSTM(10, input_shape=(None,1), activation="relu"))
+model.add(LSTM(10, input_shape=(None, 1), activation="relu"))
 model.add(Dense(1))
 model.compile(loss="mean_squared_error", optimizer="adam")
 
@@ -94,21 +98,25 @@ test_predict = model.predict(X_test)
 # Transform back to original form
 train_predict = scaler.inverse_transform(train_predict)
 test_predict = scaler.inverse_transform(test_predict)
-original_ytrain = scaler.inverse_transform(y_train.reshape(-1,1))
-original_ytest = scaler.inverse_transform(y_test.reshape(-1,1))
+original_ytrain = scaler.inverse_transform(y_train.reshape(-1, 1))
+original_ytest = scaler.inverse_transform(y_test.reshape(-1, 1))
 
 # Evaluation metrics
-print("Train data RMSE: ", math.sqrt(mean_squared_error(original_ytrain,train_predict)))
-print("Train data MSE: ", mean_squared_error(original_ytrain,train_predict))
-print("Train data MAE: ", mean_absolute_error(original_ytrain,train_predict))
+print("Train data RMSE: ", math.sqrt(
+    mean_squared_error(original_ytrain, train_predict)))
+print("Train data MSE: ", mean_squared_error(original_ytrain, train_predict))
+print("Train data MAE: ", mean_absolute_error(original_ytrain, train_predict))
 print("-------------------------------------------------------------------------------------")
-print("Test data RMSE: ", math.sqrt(mean_squared_error(original_ytest,test_predict)))
-print("Test data MSE: ", mean_squared_error(original_ytest,test_predict))
-print("Test data MAE: ", mean_absolute_error(original_ytest,test_predict))
+print("Test data RMSE: ", math.sqrt(
+    mean_squared_error(original_ytest, test_predict)))
+print("Test data MSE: ", mean_squared_error(original_ytest, test_predict))
+print("Test data MAE: ", mean_absolute_error(original_ytest, test_predict))
 
 # Additional metrics
-print("Train data explained variance regression score:", explained_variance_score(original_ytrain, train_predict))
-print("Test data explained variance regression score:", explained_variance_score(original_ytest, test_predict))
+print("Train data explained variance regression score:",
+      explained_variance_score(original_ytrain, train_predict))
+print("Test data explained variance regression score:",
+      explained_variance_score(original_ytest, test_predict))
 print("Train data R2 score:", r2_score(original_ytrain, train_predict))
 print("Test data R2 score:", r2_score(original_ytest, test_predict))
 print("Train data MGD: ", mean_gamma_deviance(original_ytrain, train_predict))
