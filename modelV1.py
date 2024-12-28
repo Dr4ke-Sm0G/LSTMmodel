@@ -5,16 +5,17 @@ import numpy as np
 import math
 import datetime as dt
 import io
+import tensorflow as tf
 
 # For Evaluation we will use these library
 from sklearn.metrics import mean_squared_error, mean_absolute_error, explained_variance_score, r2_score
 from sklearn.metrics import mean_poisson_deviance, mean_gamma_deviance
 from sklearn.preprocessing import MinMaxScaler
 
-import keras
-from keras.models import Sequential
-from keras.optimizers import Adam
-from keras.layers import Dense, LSTM, LeakyReLU, Dropout
+from tensorflow import keras
+from keras import Sequential
+from keras import Adam
+from keras import Dense, LSTM, LeakyReLU, Dropout
 
 # Load our dataset
 maindf = pd.read_csv(io.BytesIO(uploaded['BTC-USD.csv']))
