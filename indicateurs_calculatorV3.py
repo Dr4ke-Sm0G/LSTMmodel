@@ -16,6 +16,7 @@ def generate_signals(csv_file: str, fng_file: str) -> pd.DataFrame:
 
     df.reset_index(drop=True, inplace=True)
 
+    
     for col in ['open', 'high', 'low', 'close', 'volume']:
         df[col] = df[col].astype(float)
 
@@ -32,20 +33,19 @@ def generate_signals(csv_file: str, fng_file: str) -> pd.DataFrame:
     # Calcul des indicateurs
     # ---------------------------------------------------------------------
     # MACD
-    macd_df = ta.macd(df['close'], fast=12, slow=26, signal=9)
+    '''
+        macd_df = ta.macd(df['close'], fast=12, slow=26, signal=9)
     df['MACD'] = macd_df['MACD_12_26_9']
     df['MACD_signal_line'] = macd_df['MACDs_12_26_9']
+    '''
+
 
     # Bandes de Bollinger (période ajustée à 14 pour un horizon court terme)
     bb_df = ta.bbands(df['close'], length=14, std=2)
-    df['BB_lower'] = bb_df['BBL_14_2.0']
     df['BB_upper'] = bb_df['BBU_14_2.0']
 
     # OBV
     df['OBV'] = ta.obv(df['close'], df['volume'])
-
-    # RSI (inchangé, période courte déjà optimale)
-    df['RSI'] = ta.rsi(df['close'], length=7)
 
     # Fibonacci Retracements (période ajustée à 10 bougies)
     df['Fib_Max'] = df['close'].rolling(window=10).max()
@@ -55,7 +55,7 @@ def generate_signals(csv_file: str, fng_file: str) -> pd.DataFrame:
     # Réorganiser les colonnes pour mettre fng_value à la fin
     #columns_order = ['timestamp', 'open', 'high', 'low', 'close', 'BB_lower', 'OBV', 'Fib_382', 'fng_value']
 
-    columns_order = ['timestamp', 'open', 'high', 'low', 'close', 'BB_upper', 'OBV', 'Fib_382', 'fng_value', 'volume', 'MACD','MACD_signal_line', 'BB_lower', 'RSI', 'Fib_Max', 'Fib_Min']
+    columns_order = ['timestamp', 'open', 'high', 'low', 'close', 'BB_upper', 'OBV', 'Fib_382', 'fng_value']
     df = df[columns_order[0:9]]
 
     # ---------------------------------------------------------------------
@@ -65,7 +65,7 @@ def generate_signals(csv_file: str, fng_file: str) -> pd.DataFrame:
 
 if __name__ == "__main__":
     # Mettez ici le chemin vers vos fichiers CSV
-    CSV_FILE = "eth_usdt.csv"
+    CSV_FILE = "test_eth_usdt.csv"
     FNG_FILE = "fng.csv"
 
     try:
@@ -74,6 +74,7 @@ if __name__ == "__main__":
         print(df.tail())
 
         # Sauvegarde du DataFrame final
-        df.to_csv("signaux_indicateurs.csv", index=False)
+        df.to_csv("test_signaux_indicateurs.csv", index=False)
     except Exception as e:
         print(f"Erreur : {e}")
+

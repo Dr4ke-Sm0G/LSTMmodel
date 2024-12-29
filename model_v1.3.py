@@ -54,7 +54,7 @@ def main():
     # -----------------------------
     # 2) DIVISION TRAIN / TEST
     # -----------------------------
-    test_size_ratio = 0.2
+    test_size_ratio = 0.25
     X_train, X_test, y_train, y_test = train_test_split(
         X,
         y,
