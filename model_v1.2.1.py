@@ -28,6 +28,32 @@ def directional_accuracy(y_true, y_pred):
     return accuracy
 
 
+def detect_overfitting(history):
+    """
+    Analyse des courbes de perte pour détecter l'overfitting.
+    """
+    train_loss = history.history['loss']
+    val_loss = history.history['val_loss']
+
+    # Affichage des courbes de perte
+    plt.figure(figsize=(10, 5))
+    plt.plot(train_loss, label='Perte Entraînement')
+    plt.plot(val_loss, label='Perte Validation')
+    plt.title("Courbes de Perte (Overfitting Detection)")
+    plt.xlabel("Époques")
+    plt.ylabel("Perte")
+    plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
+
+    # Vérification d'overfitting
+    if val_loss[-1] > min(val_loss) * 1.1:  # Si la perte de validation augmente de plus de 10%
+        print("⚠️ Indicateur potentiel d'overfitting : La perte de validation augmente.")
+    else:
+        print("✔️ Pas de signe évident d'overfitting.")
+
+
 def main():
     # ---------------------------------------------------------
     # 0) CONFIGURATION DE TENSORFLOW POUR UTILISER LE GPU OPTIMISÉMENT
@@ -51,7 +77,6 @@ def main():
     y = np.load("y_targets.npy")
 
     # Sélectionner uniquement la colonne 'close' pour la cible
-
     y = y[:, 4]  # Ajustez l'index si nécessaire
     y = y.reshape(-1, 1)
 
@@ -86,30 +111,22 @@ def main():
     # 4) DÉFINITION DU MODÈLE (LSTM MODIFIÉ POUR CUdNN)
     # ---------------------------------------------------
     model = Sequential()
-    # Utiliser LSTM avec activation='tanh' pour l'accélération cuDNN
     model.add(Bidirectional(LSTM(
         64,
-        activation='tanh',  # Activation modifiée
-        recurrent_activation='sigmoid',  # Recurrent activation
-        recurrent_dropout=0,  # Recurrent dropout
-        unroll=False,  # Unroll
-        use_bias=True,  # Use bias
+        activation='tanh',
+        recurrent_activation='sigmoid',
         return_sequences=True
     ), input_shape=(X_train.shape[1], X_train.shape[2])))
     model.add(BatchNormalization())
     model.add(LSTM(
         32,
-        activation='tanh',  # Activation modifiée
-        recurrent_activation='sigmoid',  # Recurrent activation
-        recurrent_dropout=0,  # Recurrent dropout
-        unroll=False,  # Unroll
-        use_bias=True  # Use bias
+        activation='tanh',
+        recurrent_activation='sigmoid'
     ))
     model.add(BatchNormalization())
     model.add(Dropout(0.2))
-    model.add(Dense(1, dtype='float32'))  # Prédiction de 'close'
+    model.add(Dense(1, dtype='float32'))
 
-    # Configuration de l'optimizer avec un taux d'apprentissage ajustable
     optimizer = keras.optimizers.Adam(learning_rate=0.001)
     model.compile(loss='mean_squared_error', optimizer=optimizer)
     model.summary()
@@ -118,13 +135,9 @@ def main():
     # 5) ENTRAÎNEMENT DU MODÈLE
     # ---------------------------------------------------
     epochs = 100
-    batch_size = 64  # Augmenté pour mieux utiliser le GPU
-
-    # Créer un dossier pour les logs TensorBoard
     log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     tensorboard_callback = TensorBoard(log_dir=log_dir, histogram_freq=1)
 
-    # Callbacks pour arrêter tôt l'entraînement et réduire le taux d'apprentissage si nécessaire
     early_stopping = keras.callbacks.EarlyStopping(
         monitor='val_loss',
         patience=10,
@@ -146,6 +159,9 @@ def main():
         verbose=1
     )
 
+    # Détecter l'overfitting
+    detect_overfitting(history)
+
     # ---------------------------------------------------
     # 6) ÉVALUATION DU MODÈLE
     # ---------------------------------------------------
@@ -153,18 +169,12 @@ def main():
     y_pred = y_pred.flatten()
     y_test_flat = y_test.flatten()
 
-    # Calcul des métriques
     mse = mean_squared_error(y_test_flat, y_pred)
     rmse = np.sqrt(mse)
     mae = mean_absolute_error(y_test_flat, y_pred)
-    mape = mean_absolute_percentage_error(
-        y_test_flat, y_pred) * 100  # En pourcentage
+    mape = mean_absolute_percentage_error(y_test_flat, y_pred) * 100
     r2 = r2_score(y_test_flat, y_pred)
     directional_acc = directional_accuracy(y_test_flat, y_pred)
-    accuracy_1 = calculate_accuracy_within_threshold(
-        y_test_flat, y_pred, threshold=1.0)
-    accuracy_5 = calculate_accuracy_within_threshold(
-        y_test_flat, y_pred, threshold=5.0)
 
     print("\n--- Évaluation sur l'ensemble de test ---")
     print(f"MSE: {mse:.4f}")
@@ -173,49 +183,18 @@ def main():
     print(f"MAPE: {mape:.2f}%")
     print(f"R²: {r2:.4f}")
     print(f"Précision directionnelle: {directional_acc:.2f}%")
-    print(f"Taux de réussite (±1%): {accuracy_1:.2f}%")
-    print(f"Taux de réussite (±5%): {accuracy_5:.2f}%")
 
-    # ---------------------------------------------------
-    # 7) AFFICHAGE DES COURBES DE PERTE
-    # ---------------------------------------------------
+    # Courbe des pertes
     plt.figure(figsize=(10, 5))
-    plt.plot(history.history['loss'], label='Entraînement')
-    plt.plot(history.history['val_loss'], label='Validation')
+    plt.plot(history.history['loss'], label='Perte Entraînement')
+    plt.plot(history.history['val_loss'], label='Perte Validation')
     plt.title("Courbes de Perte")
-    plt.xlabel("Époque")
-    plt.ylabel("Perte (MSE)")
+    plt.xlabel("Époques")
+    plt.ylabel("Perte")
     plt.legend()
     plt.grid(True)
     plt.tight_layout()
     plt.show()
-
-    # ---------------------------------------------------
-    # 8) OPTIONNEL : VISUALISATION DES PRÉDITIONS VS RÉELLES
-    # ---------------------------------------------------
-    plt.figure(figsize=(8, 8))
-    plt.scatter(y_test_flat, y_pred, alpha=0.3)
-    plt.plot([y_test_flat.min(), y_test_flat.max()], [
-             y_test_flat.min(), y_test_flat.max()], 'r--')  # Ligne y=x
-    plt.xlabel('Valeur Réelle')
-    plt.ylabel('Valeur Prédite')
-    plt.title('Prédictions vs Valeurs Réelles')
-    plt.grid(True)
-    plt.show()
-
-    # Histogramme des Erreurs
-    errors = y_test_flat - y_pred
-    plt.figure(figsize=(10, 5))
-    plt.hist(errors, bins=50, edgecolor='k')
-    plt.xlabel('Erreur de Prédiction (Valeur Réelle - Prédite)')
-    plt.ylabel('Fréquence')
-    plt.title('Distribution des Erreurs de Prédiction')
-    plt.grid(True)
-    plt.show()
-
-    # Sauvegarde du modèle
-    model.save('eth_usdt_lstm_model.h5')
-    print("\nModèle sauvegardé sous 'eth_usdt_lstm_model.h5'")
 
 
 if __name__ == "__main__":

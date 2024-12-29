@@ -40,7 +40,7 @@ def create_sequences(data, sequence_length):
 
 
 # Définir la longueur des séquences
-sequence_length = 20
+sequence_length = 10
 
 # Conversion en tableau numpy
 # Exclure les timestamps pour créer des séquences

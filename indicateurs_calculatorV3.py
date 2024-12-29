@@ -53,9 +53,10 @@ def generate_signals(csv_file: str, fng_file: str) -> pd.DataFrame:
     df['Fib_382'] = df['Fib_Max'] - 0.382 * (df['Fib_Max'] - df['Fib_Min'])
 
     # Réorganiser les colonnes pour mettre fng_value à la fin
-    columns_order = ['timestamp', 'open', 'high', 'low', 'close', 'volume', 'MACD',
-                      'MACD_signal_line', 'BB_lower', 'BB_upper', 'OBV', 'RSI', 'Fib_Max', 'Fib_Min', 'Fib_382', 'fng_value']
-    df = df[columns_order]
+    #columns_order = ['timestamp', 'open', 'high', 'low', 'close', 'BB_lower', 'OBV', 'Fib_382', 'fng_value']
+
+    columns_order = ['timestamp', 'open', 'high', 'low', 'close', 'BB_upper', 'OBV', 'Fib_382', 'fng_value', 'volume', 'MACD','MACD_signal_line', 'BB_lower', 'RSI', 'Fib_Max', 'Fib_Min']
+    df = df[columns_order[0:9]]
 
     # ---------------------------------------------------------------------
     # Retourner le DataFrame avec les indicateurs calculés
