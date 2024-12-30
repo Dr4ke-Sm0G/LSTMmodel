@@ -4,10 +4,11 @@ import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 from keras import Sequential
-from tensorflow.keras.layers import LSTM, Dense, Dropout, Bidirectional, BatchNormalization
+from tensorflow.keras.layers import LSTM, Dense, Dropout, Bidirectional, BatchNormalization, Add, Layer, GlobalAveragePooling1D
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score, mean_absolute_percentage_error
 import matplotlib.pyplot as plt  # Import nécessaire pour les plots
+from tensorflow.keras.regularizers import l2
 
 def calculate_accuracy_within_threshold(y_true, y_pred, threshold=1.0):
     percentage_errors = np.abs((y_true - y_pred) / y_true) * 100
@@ -21,6 +22,21 @@ def directional_accuracy(y_true, y_pred):
     correct_directions = direction_true == direction_pred
     accuracy = np.mean(correct_directions) * 100
     return accuracy
+
+class Attention(Layer):
+    def __init__(self, **kwargs):
+        super(Attention, self).__init__(**kwargs)
+
+    def call(self, inputs):
+        query, key, value = inputs
+
+        # Calcul des poids d'attention
+        attention_scores = tf.matmul(query, key, transpose_b=True)
+        attention_scores = tf.nn.softmax(attention_scores, axis=-1)
+
+        # Appliquer les poids d'attention aux valeurs
+        context = tf.matmul(attention_scores, value)
+        return context
 
 def main():
     # ---------------------------------------------------------
@@ -68,18 +84,29 @@ def main():
     # ---------------------------------------------------
     # 3) DÉFINITION DU MODÈLE LSTM
     # ---------------------------------------------------
-    model = Sequential()
-    # Couche LSTM bidirectionnelle avec return_sequences=True pour empiler une autre couche LSTM
-    model.add(Bidirectional(LSTM(64, activation='relu', return_sequences=True), input_shape=(X_train.shape[1], X_train.shape[2])))
-    model.add(BatchNormalization())  # Normalisation par lots pour stabiliser l'apprentissage
-    model.add(LSTM(32, activation='relu'))
-    model.add(BatchNormalization())
-    model.add(Dropout(0.2))  # Régularisation pour éviter le surapprentissage
-    model.add(Dense(1))  # Prédiction de 'close'
+    inputs = tf.keras.Input(shape=(X_train.shape[1], X_train.shape[2]))
+    x = Bidirectional(LSTM(128, activation='tanh', return_sequences=True))(inputs)
+    x = BatchNormalization()(x)
+    x = Dropout(0.3)(x)
+    x = LSTM(64, activation='tanh', return_sequences=True, kernel_regularizer=l2(0.01))(x)
+    x = BatchNormalization()(x)
+
+    # Ajouter une couche d'attention
+    query, key, value = x, x, x
+    attention_output = Attention()([query, key, value])
+    x = Add()([x, attention_output])
+
+    # Réduction de la dimension temporelle avec GlobalAveragePooling1D
+    x = GlobalAveragePooling1D()(x)
+
+    # Dernière couche dense pour la prédiction
+    outputs = Dense(1, kernel_regularizer=l2(0.01))(x)
+
+    model = keras.Model(inputs, outputs)
 
     # Configuration de l'optimizer avec un taux d'apprentissage ajustable
     optimizer = keras.optimizers.Adam(learning_rate=0.001)
-    model.compile(loss='mean_squared_error', optimizer=optimizer)
+    model.compile(loss='huber', optimizer=optimizer, metrics=['mae'])  # Huber Loss pour une meilleure robustesse
     model.summary()
 
     # ---------------------------------------------------
@@ -115,7 +142,7 @@ def main():
     # ---------------------------------------------------
     # 5) ÉVALUATION DU MODÈLE
     # ---------------------------------------------------
-    y_pred = model.predict(X_test)
+    y_pred = model.predict(X_test).flatten()
 
     # Calcul des métriques
     mse = mean_squared_error(y_test, y_pred)
@@ -164,7 +191,7 @@ def main():
     plt.show()
 
     # Histogramme des Erreurs
-    errors = y_test - y_pred
+    errors = y_test.flatten() - y_pred
     plt.figure(figsize=(10, 5))
     plt.hist(errors, bins=50, edgecolor='k')
     plt.xlabel('Erreur de Prédiction (Valeur Réelle - Prédite)')
@@ -174,7 +201,7 @@ def main():
     plt.show()
 
     # Sauvegarde du modèle
-    model.save('eth_usdt_lstm_model.h5')
+    model.save('lstm_model.h5')
     print("\nModèle sauvegardé sous 'eth_usdt_lstm_model.h5'")
 
 if __name__ == "__main__":

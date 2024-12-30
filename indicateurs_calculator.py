@@ -32,13 +32,6 @@ def generate_signals(csv_file: str, fng_file: str) -> pd.DataFrame:
     # ---------------------------------------------------------------------
     # Calcul des indicateurs
     # ---------------------------------------------------------------------
-    # MACD
-    '''
-        macd_df = ta.macd(df['close'], fast=12, slow=26, signal=9)
-    df['MACD'] = macd_df['MACD_12_26_9']
-    df['MACD_signal_line'] = macd_df['MACDs_12_26_9']
-    '''
-
 
     # Bandes de Bollinger (période ajustée à 14 pour un horizon court terme)
     bb_df = ta.bbands(df['close'], length=14, std=2)
@@ -65,7 +58,7 @@ def generate_signals(csv_file: str, fng_file: str) -> pd.DataFrame:
 
 if __name__ == "__main__":
     # Mettez ici le chemin vers vos fichiers CSV
-    CSV_FILE = "test_eth_usdt.csv"
+    CSV_FILE = "eth_usdt.csv"
     FNG_FILE = "fng.csv"
 
     try:
@@ -74,7 +67,7 @@ if __name__ == "__main__":
         print(df.tail())
 
         # Sauvegarde du DataFrame final
-        df.to_csv("test_signaux_indicateurs.csv", index=False)
+        df.to_csv("signaux_indicateurs.csv", index=False)
     except Exception as e:
         print(f"Erreur : {e}")
 
