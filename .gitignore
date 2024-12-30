@@ -1,3 +1,5 @@
 .vscode/
 monenv/
 logs/
+myenv/
+logs/fit/

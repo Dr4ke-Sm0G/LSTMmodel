@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 
 # Charger les données
-df = pd.read_csv("test_signaux_indicateurs.csv")
+df = pd.read_csv("signaux_indicateurs.csv")
 
 # Vérifier et afficher les premières lignes des données
 print("Aperçu des données avant prétraitement :")
@@ -52,7 +52,7 @@ print(f"Forme des séquences d'entrée X : {X.shape}")
 print(f"Forme des cibles de sortie y : {y.shape}")
 
 # Export des données
-np.save("test_X_sequences.npy", X)
-np.save("test_y_targets.npy", y)
+np.save("X_sequences.npy", X)
+np.save("y_targets.npy", y)
 
 print("Exportation terminée : fichiers X_sequences.npy et y_targets.npy créés.")
