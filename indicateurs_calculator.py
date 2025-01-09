@@ -58,7 +58,7 @@ def generate_signals(csv_file: str, fng_file: str) -> pd.DataFrame:
 
 if __name__ == "__main__":
     # Mettez ici le chemin vers vos fichiers CSV
-    CSV_FILE = "eth_usdt.csv"
+    CSV_FILE = "daily_eth.csv"
     FNG_FILE = "fng.csv"
 
     try:

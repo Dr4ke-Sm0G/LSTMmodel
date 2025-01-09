@@ -88,7 +88,7 @@ def predict_and_compare(model_path, input_file, scaler_file, output_file, target
 
 if __name__ == "__main__":
     # Chemins des fichiers
-    MODEL_PATH = "lstm_model.h5"
+    MODEL_PATH = "model.h5"
     INPUT_FILE = "Test/test_X_sequences.npy"
     SCALER_FILE = "Test/scaler.pkl"
     OUTPUT_FILE = "Test/predicted_closes_comparison.csv"
